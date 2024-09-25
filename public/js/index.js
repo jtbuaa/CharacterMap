@@ -28,12 +28,9 @@ $(document).ready(function() {
     fileButton = document.getElementById('file');
     fileButton.addEventListener('change', onReadFile, false);
     var fontFileName = 'fonts/arialbd.ttf';
-    opentype.load(fontFileName, function(err, font) {
-        var amount, glyph, ctx, x, y, fontSize;
-        if (err) {
-            showErrorMessage(err.toString());
-            return;
-        }
+    const buffer = fetch(fontFileName).then(res => res.arrayBuffer());
+    buffer.then(data => {
+        const font = opentype.parse(data);
         onFontLoaded(font);
     });
     prepareGlyphList();
@@ -150,7 +147,7 @@ function renderGlyphItem(canvas, glyphIndex) {
     ctx.fillStyle = '#AAA';
     ctx.font = '9px "Open Sans"';
     ctx.fillText(glyphIndex, 2, cellHeight - 2);
-    var glyph = font.glyphs[glyphIndex],
+    var glyph = font.glyphs.glyphs[glyphIndex],
         glyphWidth = glyph.advanceWidth * fontScale,
         xmin = (cellWidth - glyphWidth) / 2,
         xmax = (cellWidth + glyphWidth) / 2,
@@ -239,7 +236,7 @@ function displayGlyphData(glyphIndex) {
         container.innerHTML = '';
         return;
     }
-    var glyph = font.glyphs[glyphIndex],
+    var glyph = font.glyphs.glyphs[glyphIndex],
         html;
     html = '<div><dt>name</dt><dd>' + glyph.name + '</dd></div>';
 
@@ -289,7 +286,7 @@ function displayGlyph(glyphIndex) {
 
     if (glyphIndex < 0) return;
 
-    var glyph = font.glyphs[glyphIndex],
+    var glyph = font.glyphs.glyphs[glyphIndex],
         glyphWidth = glyph.advanceWidth * glyphScale,
         xmin = (canvas.width / window.devicePixelRatio - glyphWidth) / 2,
         xmax = (canvas.width / window.devicePixelRatio + glyphWidth) / 2,
@@ -331,7 +328,7 @@ function drawPoints(glyph, ctx, x, y, fontSize) {
     x = x !== undefined ? x : 0;
     y = y !== undefined ? y : 0;
     fontSize = fontSize !== undefined ? fontSize : 24;
-    scale = 1 / glyph.font.unitsPerEm * fontSize;
+    scale = 1 / font.unitsPerEm * fontSize;
 
     blueCircles = [];
     redCircles = [];
