@@ -1,7 +1,6 @@
 // Code from
 // http://nodebox.github.io/opentype.js/
 
-var fileButton, fontFamily;
 var pageSelected, font, fontScale, fontSize, fontBaseline, glyphScale, glyphSize, glyphBaseline;
 
 var cellCount = 200,
@@ -24,15 +23,11 @@ function cellSelect(event) {
 }
 
 $(document).ready(function() {
-    fontFamily = document.getElementById('font-family');
-    fileButton = document.getElementById('file');
+    var fontUrl = document.getElementById("font-url");
+    fontUrl.addEventListener('input', onFetchFile);
+    var fileButton = document.getElementById('file');
     fileButton.addEventListener('change', onReadFile, false);
-    var fontFileName = 'fonts/arialbd.ttf';
-    const buffer = fetch(fontFileName).then(res => res.arrayBuffer());
-    buffer.then(data => {
-        const font = opentype.parse(data);
-        onFontLoaded(font);
-    });
+    fetchFile('fonts/arialbd.ttf');
     prepareGlyphList();
 
     $(".nicescroll-left").niceScroll({
@@ -206,33 +201,61 @@ function initGlyphDisplay() {
     hline('Descender', font.tables.os2.sTypoDescender);
 }
 
+function onFetchFile(e) {
+    fetchFile(e.target.value);
+}
+
+function fetchFile(filename) {
+    console.log("fetch file: " + filename);
+    if (filename.trim().length === 0) return;
+    fetch(filename)
+    .then(res => {
+        if (res.status !== 200) {
+            throw new Error("Network error " + res.status);
+        }
+        return res.arrayBuffer()
+    })
+    .then(data => loadFont(data))
+    .catch(err => {
+        console.log(err)
+        showErrorMessage(err + ", " + filename);
+    });
+}
+
 function onReadFile(e) {
     var file = e.target.files[0];
+    console.log("read file: " + file.name);
     var reader = new FileReader();
 
     reader.onload = function(e) {
-        try {
-            var decompressResult = window.Module.decompress(e.target.result);
-            if (!decompressResult) {
-                // decompress failed, use opentype to parse the file content directly.
-                font = opentype.parse(e.target.result);
-            } else {
-                // use opentype to parse decompress result.
-                font = opentype.parse(decompressResult);
-            }
-            // fontFamily.innerHTML = font.familyName || this.files[0].name.replace(/\.[^/.]+$/, "");
-            showErrorMessage('');
-            onFontLoaded(font);
-        } catch (err) {
-            showErrorMessage(err.toString());
-            throw (err);
-        }
+        loadFont(e.target.result);
     };
     reader.onerror = function(err) {
         showErrorMessage(err.toString());
     };
 
     reader.readAsArrayBuffer(file);
+}
+
+function loadFont(buffer) {
+    try {
+        if (window.Module.decompress === undefined) {
+            font = opentype.parse(buffer);
+        } else {
+            var decompressResult = window.Module.decompress(buffer);
+            if (!decompressResult) {
+                // decompress failed, use opentype to parse the file content directly.
+                font = opentype.parse(buffer);
+            } else {
+                // use opentype to parse decompress result.
+                font = opentype.parse(decompressResult);
+            }
+        }
+        onFontLoaded(font);
+    } catch (err) {
+        console.log(err)
+        showErrorMessage(err.toString());
+    }
 }
 
 function displayGlyphData(glyphIndex) {
