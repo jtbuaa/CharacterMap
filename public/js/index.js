@@ -23,10 +23,27 @@ function cellSelect(event) {
     }
 }
 
+function loadScript(filename,callback) {
+    var fileref = document.createElement('script');
+    fileref.setAttribute("type", "text/javascript");
+    fileref.setAttribute("src", filename);
+    fileref.onload = callback();
+    if (typeof fileref != "undefined") {
+      document.getElementsByTagName("head")[0].appendChild(fileref)
+    }
+  }
+
 $(document).ready(function() {
     fontFamily = document.getElementById('font-family');
     fileButton = document.getElementById('file');
     fileButton.addEventListener('change', onReadFile, false);
+    if (!window.Module) {
+        const path = 'https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js'
+        const init = new Promise((done) => window.Module = { onRuntimeInitialized: done});
+        loadScript(path, function() {
+            init;
+        });
+    }
     var fontFileName = 'fonts/arialbd.ttf';
     const buffer = fetch(fontFileName).then(res => res.arrayBuffer());
     buffer.then(data => {
@@ -212,7 +229,14 @@ function onReadFile(e) {
 
     reader.onload = function(e) {
         try {
-            font = opentype.parse(e.target.result);
+            var decompressResult = window.Module.decompress(e.target.result);
+            if (!decompressResult) {
+                // decompress failed, use opentype to parse the file content directly.
+                font = opentype.parse(e.target.result);
+            } else {
+                // use opentype to parse decompress result.
+                font = opentype.parse(decompressResult);
+            }
             // fontFamily.innerHTML = font.familyName || this.files[0].name.replace(/\.[^/.]+$/, "");
             showErrorMessage('');
             onFontLoaded(font);
