@@ -22,11 +22,27 @@ function cellSelect(event) {
     }
 }
 
+function onSearchUnicode(e) {
+    if (!font) return;
+    // get the index by unicode, e.target.value
+    var inputValue = e.target.value.trim().toLowerCase();
+    for (var i = 0; i < font.numGlyphs; i++) {
+        var unicode = font.glyphs.glyphs[i].unicode;
+        if (unicode !== undefined && inputValue == unicode.toString(16)) {
+            displayGlyph(i);
+            displayGlyphData(i);
+            break;
+        }
+    }
+}
+
 $(document).ready(function() {
     var fontUrl = document.getElementById("font-url");
     fontUrl.addEventListener('input', onFetchFile);
     var fileButton = document.getElementById('file');
     fileButton.addEventListener('change', onReadFile, false);
+    var searchButton = document.getElementById('search-unicode');
+    searchButton.addEventListener('input', onSearchUnicode);
     fetchFile('fonts/arialbd.ttf');
     prepareGlyphList();
 
