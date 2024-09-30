@@ -6,37 +6,27 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>CharMap - Powered by OpenType.js</title>
     <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,300,600,700' rel='stylesheet' type='text/css'/>
-    <link href='css/index.css' rel='stylesheet' type='text/css'/>
+    <link href='css/index.css?version=1' rel='stylesheet' type='text/css'/>
     <script src="js/jquery-2.1.3.min.js" type="text/javascript"></script>
-    <script src="js/jquery.nicescroll.min.js" type="text/javascript"></script>
     <script src="https://opentype.js.org/dist/opentype.js"></script>
     <script src="https://unpkg.com/wawoff2@2.0.1/build/decompress_binding.js" type="text/javascript"></script>
-    <script src="js/index.js" type="text/javascript"></script>
+    <script src="js/index.js?version=1" type="text/javascript"></script>
 </head>
 <body>
-<div style="position:fixed;top:0;right:0;left:0;bottom:0;width:200px;background:#171D25;padding:20px;">
-    <div style="position:absolute;bottom:0;left:0;right:0;height:60px;padding:0 20px;z-index:3;">
-        <div style="font-size: 10px;color:#999;font-weight: 600;letter-spacing:1px;text-transform:uppercase;text-align:center;position:relative;line-height:60px;">
-            Powered By OpenType.js
-        </div>
-    </div>
-    <div style="position:absolute;top:0;left:0;right:0;height:40px;box-shadow:0 -1px 3px rgba(0,0,0,0.2);z-index:3;background:#171D25;padding:15px;">
-        <div class="browse-wrap" style="position:relative;height:40px;border-radius:4px;">
-            <div class="title" id="font-family" style="text-align:center;line-height:40px;">Select font</div>
-            <input id="file" type="file" name="upload" class="upload" title="select font"/>
-        </div>
-    </div>
-    <div style="position:absolute;top:55px;left:0;right:0;bottom:40px;z-index:2;padding:15px;">
-        <div class="nicescroll-left"
-             style="overflow:auto;height:100%;overflow-x:hidden;border-radius:5px;border:1px solid rgba(255, 255, 255, 0.07);background: rgba(255, 255, 255, 0.02);">
-            <div id="pagination"></div>
-        </div>
-    </div>
+
+<div class="navbar">
+    <a class="browse-wrap">&#128194; Select font <input id="file" type="file" name="upload" class="upload" title="select font"/></a>
+    <a onclick="openPagination()">&#9776; paginations</a>
+    <a onclick="openGlyphs()">&#9638; glyphs</a>
 </div>
-<div style="position:fixed;left:200px;width:475px;top:0;bottom:0;background:#1D242E;padding:20px;">
-    <div style="position:absolute;top:20px;left:0;right:0;bottom:0;z-index:2;">
-        <div class="nicescroll-center" style="overflow:auto;height:100%;overflow-x:hidden;padding:20px;padding-top:0;">
-            <div style="height:40px;width:100%;border-radius:4px;">
+
+<div onclick="closePaginationIfNeeded()" style="background:#1D242E;">
+    <div style="display: flex;justify-content: center;z-index:2;">
+        <div style="overflow:auto;height:100%;overflow-x:hidden;padding:20px;padding-top:0;">
+            <div id="filename" style="font-size: 10px;color:#999;font-weight: 600;letter-spacing:1px;text-align:center;position:relative;line-height:40px;">
+            </div>
+
+            <div style="height:40px;width:100%;border-radius:4px;padding-top:10px;">
                 or input font url
                 <input id="font-url" type="text" placeholder="input url of font file"/>
             </div>
@@ -59,39 +49,36 @@
                 <canvas id="glyph" width="300" height="300"></canvas>
             </div>
             <div id="glyph-data"></div>
+            <div style="font-size: 10px;color:#999;font-weight: 600;letter-spacing:1px;text-transform:uppercase;text-align:center;position:relative;line-height:40px;">
+                Powered By OpenType.js
+            </div>
         </div>
     </div>
 </div>
-<div style="position:fixed;left:675px;right:0;top:0;bottom:0;background: #FFF;">
-    <div style="position:absolute;top:0;left:0;right:0;height:80px;padding:20px;box-shadow:inset 0 -1px 0 #EEE;z-index:3;background:#FFF;">
+
+<div id="pages" class="overlay">
+    <div style="position:absolute;top:0;left:0;right:0;height:80px;padding:20px;box-shadow:inset 0 -1px 0 #EEE;z-index:3;">
+        <div style="font-size: 25px;margin-top:5px;font-weight: 100;letter-spacing:1px;text-align:right;" onclick="closePagination()">
+            &times;
+        </div>
+    </div>
+    <div style="position:absolute;top:80px;left:0;right:0;bottom:0;z-index:2;">
+        <div style="overflow:auto;height:100%;overflow-x:hidden;">
+            <div id="pagination"></div>
+        </div>
+    </div>
+</div>
+
+<div id="glyphs" class="overlay" style="background: #FFF;" onclick="closeGlyphs()">
+    <div style="position:absolute;top:0;left:0;right:0;height:80px;padding:20px;box-shadow:inset 0 -1px 0 #EEE;z-index:3;">
         <div style="font-size: 25px;margin-top:5px;color:#BBB;font-weight: 100;letter-spacing:1px;text-align:left;">
             Glyphs
         </div>
     </div>
     <div style="position:absolute;top:80px;left:0;right:0;bottom:0;z-index:2;">
-        <div class="nicescroll-right" style="overflow:auto;height:100%;overflow-x:hidden;">
+        <div style="overflow:auto;height:100%;overflow-x:hidden;">
             <div id="glyph-list-end"></div>
         </div>
     </div>
 </div>
-<div>
-    <div id="message"></div>
-</div>
-</body>
-<script>
-    (function (i, s, o, g, r, a, m) {
-        i['GoogleAnalyticsObject'] = r;
-        i[r] = i[r] || function () {
-                    (i[r].q = i[r].q || []).push(arguments)
-                }, i[r].l = 1 * new Date();
-        a = s.createElement(o),
-                m = s.getElementsByTagName(o)[0];
-        a.async = 1;
-        a.src = g;
-        m.parentNode.insertBefore(a, m)
-    })(window, document, 'script', 'https://www.google-analytics.com/analytics.js', 'ga');
-
-    ga('create', 'UA-76818095-1', 'auto');
-    ga('send', 'pageview');
-</script>
 </html>

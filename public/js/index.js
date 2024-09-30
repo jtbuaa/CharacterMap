@@ -11,8 +11,34 @@ var cellCount = 200,
     cellMarginLeftRight = 1,
     glyphMargin = 5;
 
+function openPagination() {
+    if (!font) return;
+    document.getElementById("pages").style.width = "50%";
+}
+
+function closePagination() {
+    document.getElementById("pages").style.width = "0%";
+}
+
+function closePaginationIfNeeded() {
+    if (document.getElementById("pages").style.width = "50%") {
+        closePagination();
+    }
+}
+
+function openGlyphs() {
+    if (!font) return;
+    closePagination();
+    document.getElementById("glyphs").style.width = "100%";
+}
+
+function closeGlyphs() {
+    document.getElementById("glyphs").style.width = "0%";
+}
+
 function cellSelect(event) {
     if (!font) return;
+    closeGlyphs();
     var firstGlyphIndex = pageSelected * cellCount,
         cellIndex = +event.target.id.substr(1),
         glyphIndex = firstGlyphIndex + cellIndex;
@@ -46,26 +72,6 @@ $(document).ready(function() {
     fetchFile('fonts/arialbd.ttf');
     prepareGlyphList();
 
-    $(".nicescroll-left").niceScroll({
-        cursorcolor: "rgba(255,255,255,0.2)",
-        cursorborderradius: "5px",
-        cursorborder: "none",
-        cursorwidth: "7"
-    });
-
-    $(".nicescroll-center").niceScroll({
-        cursorcolor: "rgba(255,255,255,0.4)",
-        cursorborderradius: 0,
-        cursorborder: "none",
-        cursorwidth: "7"
-    });
-
-    $(".nicescroll-right").niceScroll({
-        cursorcolor: "#AAA",
-        cursorborderradius: 0,
-        cursorborder: "none",
-        cursorwidth: "7"
-    });
     // Span
     // var span = document.getElementsByClassName('upload-path');
     // Button
@@ -231,7 +237,7 @@ function fetchFile(filename) {
         }
         return res.arrayBuffer()
     })
-    .then(data => loadFont(data))
+    .then(data => loadFont(data, filename))
     .catch(err => {
         console.log(err)
     });
@@ -243,7 +249,7 @@ function onReadFile(e) {
     var reader = new FileReader();
 
     reader.onload = function(e) {
-        loadFont(e.target.result);
+        loadFont(e.target.result, file.name);
     };
     reader.onerror = function(err) {
         showErrorMessage(err.toString());
@@ -252,7 +258,7 @@ function onReadFile(e) {
     reader.readAsArrayBuffer(file);
 }
 
-function loadFont(buffer) {
+function loadFont(buffer, filename) {
     try {
         if (window.Module.decompress === undefined) {
             font = opentype.parse(buffer);
@@ -267,6 +273,7 @@ function loadFont(buffer) {
             }
         }
         onFontLoaded(font);
+        document.getElementById('filename').textContent = filename;
     } catch (err) {
         console.log(err)
         showErrorMessage(err.toString());
@@ -315,7 +322,6 @@ function displayFontBasic() {
 
     container.innerHTML = html;
 }
-
 
 var resolveDisplayGlyph;
 
@@ -438,8 +444,8 @@ function onFontLoaded(font) {
     displayFontBasic();
     initGlyphDisplay();
     displayGlyphPage(0);
-    displayGlyph(-1);
-    displayGlyphData(-1);
+    displayGlyph(0);
+    displayGlyphData(0);
 }
 
 function pathCommandToString(cmd) {
@@ -472,6 +478,7 @@ function pageSelect(event) {
     }
 
     displayGlyphPage(+event.target.id.substr(1));
+    openGlyphs();
 }
 
 function displayGlyphPage(pageNum) {
