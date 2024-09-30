@@ -234,7 +234,6 @@ function fetchFile(filename) {
     .then(data => loadFont(data))
     .catch(err => {
         console.log(err)
-        showErrorMessage(err + ", " + filename);
     });
 }
 
